@@ -7,10 +7,13 @@
 // constructor
 // Set up input pin, active state of the button (HIGH or LOW),
 // the debounce duration, and the starting toggle state
-ToggleButton::ToggleButton(int buttonPin, int buttonActiveState, bool beginState)
+ToggleButton::ToggleButton(int buttonPin, int buttonActiveState, bool beginState,
+                            int debounceDuration)
 {
     button = buttonPin;
-    debounce = 250;
+    debouncer.debounceLength = debounceDuration;
+    debouncer.prevState = 0;
+    debouncer.timeInitial = millis();
     currentState = beginState;
     activeState = buttonActiveState;   
     
@@ -21,29 +24,43 @@ ToggleButton::ToggleButton(int buttonPin, int buttonActiveState, bool beginState
 void ToggleButton::checkButton(void)
 {    
     int state = digitalRead(button);
-    
-    if(state == activeState)
+    //static local variables are auto-initialized to zero under ISO C++ 
+
+    //if the input has stabilized and is at the requested value
+    if(debounce(state) && state == activeState)
     {
-        flipState();
+        //toggle our little guy
+        currentState != currentState;
     }
 }
 
-// Flip the toggle state
-void ToggleButton::flipState(void)
+//check if the circuit bounced
+bool ToggleButton::debounce(int pinState)
 {
-    delay(debounce); // Debounce (stablilize) the input
-    
-    if(currentState == true)
+    if(pinState != debouncer.prevState)
     {
-        currentState = false;
+        //set previous state 
+        debouncer.prevState = pinState;
+        //reset initial time value 
+        debouncer.timeInitial = millis();
+        //note: at this point it is impossible for dt > expected 
     }
-    else
+    //calculate if dt > expected to see if state is stable
+    if((millis() - debouncer.timeInitial) > (long) debouncer.debounceLength)
     {
-        currentState = true;
+        return true;
     }
+
+    return false;
 }
 
 void ToggleButton::setDebounce(int duration)
 {
-        debounce = duration;
+        debouncer.debounceLength = duration;
+}
+
+//accessor to protect state flag from external meddling with the switch state
+bool ToggleButton::state()
+{
+    return currentState;
 }
